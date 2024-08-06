@@ -1,3 +1,4 @@
+import Google from '@auth/core/providers/google';
 import type { Account, Profile, TokenSet } from '@auth/core/types';
 import { Pool } from '@neondatabase/serverless';
 import NextAuth, { type NextAuthConfig } from 'next-auth';
@@ -73,6 +74,11 @@ const updateAdapterUser = async ({
         githubUserID: githubUserID,
         githubUserName: githubUserName,
         isJoinedOrganization: isJoinedOrganization,
+      });
+    } else if (account?.provider === 'google') {
+      await adapter.updateUser({
+        ...adapterUser,
+        googleUserID: account.providerAccountId,
       });
     }
   }
@@ -158,6 +164,14 @@ export const config = (request: NextRequest | undefined): NextAuthConfig => {
         profile: getDiscordProfile(adapterUserPromise),
       }),
       GitHub,
+      Google({
+        authorization: {
+          params: {
+            // https://github.com/nextauthjs/next-auth/blob/748c9ecb8ce10bef2b628520451f676db0499f9d/docs/pages/guides/configuring-oauth-providers.mdx
+            scope: 'openid https://www.googleapis.com/auth/calendar',
+          },
+        },
+      }),
     ],
     theme: { logo: '/icon.png' },
   };
